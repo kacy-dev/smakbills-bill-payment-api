@@ -16,12 +16,12 @@ app.get('/', (req: Request, res: Response) => {
   });
 });
 
+app.use('/api/auth', userAuth);
 // 404 handler for unknown routes
 app.use((req: Request, res: Response) => {
   res.status(404).json({ message: 'Route Not Found'});
 });
 
-app.use("/api/auth", userAuth);
 
 // Error handling middleware
 app.use(errorHandler);
