@@ -2,6 +2,7 @@ import express, { Application } from "express";
 import express, { Request, Response, NextFunction } from 'express';
 import cors from "cors";
 import{ errorHandler } from './middlewares/errorHandler';
+import userAuth from "./routes/user/userAuthRoutes";
 
 
 const app: Application = express();
@@ -20,6 +21,7 @@ app.use((req: Request, res: Response) => {
   res.status(404).json({ message: 'Route Not Found'});
 });
 
+app.use("/api/auth", userAuth);
 
 // Error handling middleware
 app.use(errorHandler);

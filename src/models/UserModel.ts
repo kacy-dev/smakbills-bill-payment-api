@@ -6,10 +6,13 @@ export interface IUser extends Document {
   username: string;
   password: string;
   referralCode?: string;
-  referrerdBy?: string;
-  isVerified: boolean;
-  balance: number;       
-  currency: string;     
+  referrerdBy?: mongoose.Types.ObjectId;
+  failedLoginAttempts: number;
+  lockUntil?: Date;
+  otpCode?: string;
+  otpExpires?: Date;
+  isVerified: boolean;   
+  // currency: string;     
   createdAt: Date;
   updatedAt: Date;
 }
@@ -44,28 +47,35 @@ const userSchema = new Schema<IUser>(
       trim: true,
     },
     referrerdBy: {
-      type: String,
+      type: Schema.Types.ObjectId,
+      ref: "User",
       required: false,
       trim: true,
     },
-    balance: {
-      type: Number,
-      required: true,
-      default: 0,   
+    failedLoginAttempts: { 
+      type: Number, 
+      default: 0 
+    },
+    lockUntil: { 
+        type: Date 
+    },
+    otpCode: { 
+      type: String 
+    },
+    otpExpires: { 
+      type: Date 
     },
     isVerified: {
       type: Boolean,
       required: true,
       default: false,
     },
-    currency: {
-      type: String,
-      required: true,
-      default: "NGN", 
-    },
   },
   { timestamps: true }
 );
 
+userSchema.methods.isLocked = function (): boolean {
+  return !!(this.lockUntil && this.lockUntil > new Date());
+};
 
 export const User = model<IUser>("User", userSchema);
