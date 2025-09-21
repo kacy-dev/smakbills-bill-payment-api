@@ -1,24 +1,31 @@
-import { Schema, model, Document } from "mongoose";
-
+import { Schema, model, Document, Types } from "mongoose";
 
 export interface IUser extends Document {
+  fullName: string;
   email: string;
-  username: string;
+  phone: string;
   password: string;
-  referralCode?: string;
-  referrerdBy?: mongoose.Types.ObjectId;
+  referralCode: string;
+  referredBy?: Types.ObjectId;
+  referralEarnings: number;
   failedLoginAttempts: number;
   lockUntil?: Date;
   otpCode?: string;
   otpExpires?: Date;
-  isVerified: boolean;   
-  // currency: string;     
+  isVerified: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
 
 const userSchema = new Schema<IUser>(
   {
+    fullName: {
+      type: String,
+      required: [true, "Full name is required"],
+      trim: true,
+      minlength: [2, "Full name must be at least 2 characters"],
+      maxlength: [50, "Full name cannot exceed 50 characters"],
+    },
     email: {
       type: String,
       required: [true, "Email is required"],
@@ -27,14 +34,12 @@ const userSchema = new Schema<IUser>(
       trim: true,
       match: [/^\S+@\S+\.\S+$/, "Please provide a valid email address"],
     },
-    username: {
+    phone: {
       type: String,
-      required: [true, "Username is required"],
+      required: [true, "Phone number is required"],
       unique: true,
       trim: true,
-      minlength: [3, "Username must be at least 3 characters"],
-      maxlength: [20, "Username cannot exceed 20 characters"],
-      match: [/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores"],
+      match: [/^\+?[0-9]{7,15}$/, "Please provide a valid phone number"],
     },
     password: {
       type: String,
@@ -43,27 +48,31 @@ const userSchema = new Schema<IUser>(
     },
     referralCode: {
       type: String,
-      required: false,
+      required: true,
+      unique: true,
       trim: true,
     },
-    referrerdBy: {
+    referredBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: false,
-      trim: true,
     },
-    failedLoginAttempts: { 
-      type: Number, 
-      default: 0 
+    referralEarnings: {
+      type: Number,
+      default: 0,
     },
-    lockUntil: { 
-        type: Date 
+    failedLoginAttempts: {
+      type: Number,
+      default: 0,
     },
-    otpCode: { 
-      type: String 
+    lockUntil: {
+      type: Date,
     },
-    otpExpires: { 
-      type: Date 
+    otpCode: {
+      type: String,
+    },
+    otpExpires: {
+      type: Date,
     },
     isVerified: {
       type: Boolean,
@@ -77,5 +86,14 @@ const userSchema = new Schema<IUser>(
 userSchema.methods.isLocked = function (): boolean {
   return !!(this.lockUntil && this.lockUntil > new Date());
 };
+
+// Auto-generate referralCode before saving (smakbills + random string)
+userSchema.pre("save", function (next) {
+  if (!this.referralCode) {
+    this.referralCode =
+      "smakbills-" + Math.random().toString(36).substring(2, 10);
+  }
+  next();
+});
 
 export const User = model<IUser>("User", userSchema);
